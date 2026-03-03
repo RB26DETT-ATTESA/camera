@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/685/685655.png">
+    <title>My Silent Cam</title>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; position: fixed; }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        #shutter {
+            position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%);
+            width: 80px; height: 80px; background: rgba(255,255,255,0.8);
+            border: 5px solid #fff; border-radius: 50%; z-index: 100;
+        }
+        #flash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; opacity: 0; pointer-events: none; z-index: 200; }
+    </style>
+</head>
+<body>
+    <video id="v" autoplay playsinline muted></video>
+    <div id="flash"></div>
+    <div id="shutter"></div>
+    <canvas id="c" style="display:none"></canvas>
+
+    <script>
+        const v = document.getElementById('v'), s = document.getElementById('shutter'), f = document.getElementById('flash'), c = document.getElementById('c');
+
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(stream => { v.srcObject = stream; });
+
+        s.onclick = () => {
+            f.style.opacity = 1; setTimeout(() => f.style.opacity = 0, 100);
+            c.width = v.videoWidth; c.height = v.videoHeight;
+            c.getContext('2d').drawImage(v, 0, 0);
+            c.toBlob(blob => {
+                const file = new File([blob], "photo.png", { type: "image/png" });
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    navigator.share({ files: [file] }).catch(() => {});
+                }
+            });
+        };
+    </script>
+</body>
+</html>
