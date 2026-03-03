@@ -23,20 +23,45 @@
     <canvas id="c" style="display:none"></canvas>
 
     <script>
-        const v = document.getElementById('v'), s = document.getElementById('shutter'), f = document.getElementById('flash'), c = document.getElementById('c');
+        const v = document.getElementById('v'), 
+              s = document.getElementById('shutter'), 
+              f = document.getElementById('flash'), 
+              c = document.getElementById('c');
 
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(stream => { v.srcObject = stream; });
+        // ★ ここが画質を限界まで上げる設定 ★
+        const constraints = {
+            video: {
+                facingMode: "environment",
+                width: { ideal: 4096 }, // iPhoneの最大解像度を狙う
+                height: { ideal: 2160 }
+            },
+            audio: false
+        };
+
+        navigator.mediaDevices.getUserMedia(constraints).then(stream => {
+            v.srcObject = stream;
+            v.play();
+        });
 
         s.onclick = () => {
-            f.style.opacity = 1; setTimeout(() => f.style.opacity = 0, 100);
-            c.width = v.videoWidth; c.height = v.videoHeight;
-            c.getContext('2d').drawImage(v, 0, 0);
+            f.style.opacity = 1; 
+            setTimeout(() => f.style.opacity = 0, 100);
+            
+            c.width = v.videoWidth; 
+            c.height = v.videoHeight;
+            
+            const ctx = c.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(v, 0, 0, c.width, c.height);
+            
+            // ★ 画質100%(1.0)のJPEGで保存 ★
             c.toBlob(blob => {
-                const file = new File([blob], "photo.png", { type: "image/png" });
+                const file = new File([blob], `photo_${Date.now()}.jpg`, { type: "image/jpeg" });
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
                     navigator.share({ files: [file] }).catch(() => {});
                 }
-            });
+            }, 'image/jpeg', 1.0); 
         };
     </script>
 </body>
